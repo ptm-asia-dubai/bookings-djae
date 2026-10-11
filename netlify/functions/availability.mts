@@ -1,6 +1,7 @@
-// Busy days for the booking calendar, read from a private iCal feed (e.g. Google Calendar's
-// "secret address in iCal format"). Set AVAILABILITY_ICS_URL to enable; without it the page
-// falls back to "All dates subject to confirmation".
+// Busy days for the booking calendar. Primary source is the Apps Script web app
+// (doGet?action=availability, reading the gig calendar + BLOCKING_CALENDAR_IDS) via
+// GOOGLE_APPS_SCRIPT_URL + BOOKING_WEBHOOK_SECRET. Fallback is a private iCal feed in
+// AVAILABILITY_ICS_URL. With neither, the page shows "All dates subject to confirmation".
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const ymd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
@@ -41,13 +42,25 @@ export default async (req: Request) => {
 
   const from = new Date(Date.UTC(+m[1], +m[2] - 1, 1))
   const to = new Date(Date.UTC(+m[1], +m[2], 1))
+  const scriptUrl = Netlify.env.get('GOOGLE_APPS_SCRIPT_URL')
+  const secret = Netlify.env.get('BOOKING_WEBHOOK_SECRET')
   const feed = Netlify.env.get('AVAILABILITY_ICS_URL')
-  if (!feed) return Response.json({ live: false, busy: [] })
+  if (!(scriptUrl && secret) && !feed) return Response.json({ live: false, busy: [] })
 
   try {
-    const res = await fetch(feed)
-    if (!res.ok) throw new Error(`Feed responded ${res.status}`)
-    const busy = busyDays(await res.text(), from, to)
+    let busy: string[]
+    if (scriptUrl && secret) {
+      const url = new URL(scriptUrl)
+      url.search = new URLSearchParams({ action: 'availability', month, secret }).toString()
+      const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(15000) })
+      const body = (await res.json()) as { ok: boolean; busy?: string[]; error?: string }
+      if (!body.ok) throw new Error(`Apps Script: ${body.error ?? 'error'}`)
+      busy = body.busy ?? []
+    } else {
+      const res = await fetch(feed!)
+      if (!res.ok) throw new Error(`Feed responded ${res.status}`)
+      busy = busyDays(await res.text(), from, to)
+    }
     return Response.json(
       { live: true, busy },
       { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate', 'Netlify-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } },
