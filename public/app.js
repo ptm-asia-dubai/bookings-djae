@@ -1,4 +1,70 @@
-// Aira Edward booking page: live availability calendar + Netlify Forms AJAX submit.
+// Aira Edward: marquee headers, photo reel, live availability calendar + Netlify Forms AJAX submit.
+
+/* ---------------- Marquees ---------------- */
+
+// Each .mq[data-mq] becomes an infinite "WORD / WORD / WORD /" track. The track holds two identical
+// groups, each wide enough to cover the viewport, and the CSS animation shifts it by exactly -50%.
+function buildMarquee(el) {
+  const phrases = el.dataset.mq.split(' / ')
+  const track = document.createElement('div')
+  track.className = 'mq__track'
+  track.setAttribute('aria-hidden', 'true')
+
+  const group = document.createElement('div')
+  group.className = 'mq__group'
+  const addRun = () => {
+    for (const phrase of phrases) {
+      const item = document.createElement('span')
+      item.className = 'mq__item'
+      item.textContent = phrase
+      const sep = document.createElement('span')
+      sep.className = 'mq__sep'
+      sep.textContent = '/'
+      group.append(item, sep)
+    }
+  }
+  addRun()
+  track.append(group)
+  el.append(track)
+
+  const target = Math.max(window.innerWidth, 1600)
+  let guard = 0
+  while (group.scrollWidth < target && guard++ < 40) addRun()
+  track.append(group.cloneNode(true))
+
+  // Constant speed (px/s) regardless of how long the phrase is.
+  const speed = Number(el.dataset.speed) || 40
+  track.style.setProperty('--mq-dur', `${(group.scrollWidth / speed).toFixed(1)}s`)
+}
+
+function buildMarquees() {
+  for (const el of document.querySelectorAll('.mq[data-mq]')) {
+    el.querySelector('.mq__track')?.remove()
+    buildMarquee(el)
+  }
+}
+
+// Fonts change glyph widths, so measure again once they load.
+buildMarquees()
+document.fonts.ready.then(buildMarquees)
+
+let lastWidth = window.innerWidth
+window.addEventListener('resize', () => {
+  if (window.innerWidth <= lastWidth) return
+  lastWidth = window.innerWidth
+  buildMarquees()
+})
+
+// Photo reel: duplicate the list once so the -50% loop is seamless.
+const reel = document.querySelector('.reel__track')
+if (reel) {
+  for (const li of [...reel.children]) {
+    const copy = li.cloneNode(true)
+    copy.setAttribute('aria-hidden', 'true')
+    copy.querySelector('img').alt = ''
+    reel.append(copy)
+  }
+}
 
 const form = document.querySelector('form[name="booking"]')
 const dateInput = form.elements.event_date
@@ -174,7 +240,7 @@ function clientCalendarLink(data) {
     text: `HOLD: Aira Edward — ${data.event_type}`,
     dates: `${ymd}T${start}00/${endDate}T${end}00`,
     ctz: 'Asia/Dubai',
-    details: 'Tentative — pending confirmation from Patty Tiu Management (djae-dxb@pattytiu.com).',
+    details: 'Tentative — pending confirmation from Patty Tiu Management (bookings@airaedward.com).',
     location: [data.venue, data.venue_address, data.city].filter(Boolean).join(', '),
   })
   return `https://calendar.google.com/calendar/render?${params}`
@@ -211,7 +277,7 @@ form.addEventListener('submit', async (e) => {
     success.focus()
     success.scrollIntoView({ behavior: 'smooth', block: 'center' })
   } catch {
-    showError('Something went wrong sending your request. Please try again or email djae-dxb@pattytiu.com.')
+    showError('Something went wrong sending your request. Please try again or email bookings@airaedward.com.')
   } finally {
     button.disabled = false
     button.textContent = 'Send booking request'
