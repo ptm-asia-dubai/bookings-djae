@@ -488,27 +488,18 @@ legend {
 .bloc__grid li:hover img { transform: scale(1.04); filter: saturate(1.1); }
 
 .statement {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   border-top: var(--rule);
 }
-.statement__text,
-.statement__pay {
+.statement__text {
   margin: 0;
   font-family: var(--display);
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.005em;
   line-height: 0.95;
+  font-size: clamp(36px, 5.4vw, 88px);
   padding: clamp(40px, 6vw, 96px) var(--pad);
-}
-.statement__text { font-size: clamp(44px, 6.6vw, 104px); }
-.statement__pay {
-  display: flex;
-  align-items: flex-end;
-  border-left: var(--rule);
-  font-size: clamp(64px, 11vw, 176px);
-  line-height: 0.88;
+  text-wrap: balance;
 }
 
 /* ---------- Photo reel ---------- */
@@ -853,9 +844,6 @@ legend span {
   .about__photo img { aspect-ratio: 4 / 3; }
   .cal { position: static; }
   .steps { grid-template-columns: 1fr; }
-  .statement { grid-template-columns: 1fr; }
-  .statement__text { padding-bottom: 28px; }
-  .statement__pay { border-left: 0; border-top: var(--rule); padding-top: 28px; }
   .steps li { border-right: 0; border-bottom: var(--rule); }
   .steps li:last-child { border-bottom: 0; }
   .bloc__grid { min-height: 0; grid-template-rows: 220px 220px; }
