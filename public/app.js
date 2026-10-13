@@ -240,7 +240,7 @@ function clientCalendarLink(data) {
     text: `HOLD: Aira Edward — ${data.event_type}`,
     dates: `${ymd}T${start}00/${endDate}T${end}00`,
     ctz: 'Asia/Dubai',
-    details: 'Tentative — pending confirmation from Patty Tiu Management (bookings@airaedward.com).',
+    details: 'Tentative — pending confirmation from Aira Edward (bookings@airaedward.com).',
     location: [data.venue, data.venue_address, data.city].filter(Boolean).join(', '),
   })
   return `https://calendar.google.com/calendar/render?${params}`
